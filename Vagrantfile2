@@ -1,0 +1,67 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  
+  # Image système de base par défaut pour notre infrastructure
+  config.vm.box = "debian/bullseye64"
+
+  # ============================================================================
+  # MACHINE 1 : Le Serveur DNS (srv-dns)
+  # ============================================================================
+  config.vm.define "srv-dns" do |dns|
+    dns.vm.hostname = "srv-dns-ggt"
+    dns.vm.network "private_network", ip: "192.168.56.10"
+    
+    dns.vm.provider "virtualbox" do |vb|
+      vb.name = "GGT-SRV-DNS"
+      vb.memory = "512"
+    end
+
+    # Provisioning : Installation automatique du serveur DNS Bind9
+    dns.vm.provision "shell", inline: <<-SHELL
+      echo "[DNS] Installation de Bind9..."
+      apt-get update -y && apt-get install -y bind9 dnsutils
+    SHELL
+  end
+
+  # ============================================================================
+  # MACHINE 2 : Le Serveur Web (srv-web)
+  # ============================================================================
+  config.vm.define "srv-web" do |web|
+    web.vm.hostname = "srv-web-ggt"
+    web.vm.network "private_network", ip: "192.168.56.20"
+    
+    web.vm.provider "virtualbox" do |vb|
+      vb.name = "GGT-SRV-WEB"
+      vb.memory = "512"
+    end
+
+    # Provisioning : Installation de Nginx et création d'une page d'accueil de test
+    web.vm.provision "shell", inline: <<-SHELL
+      echo "[WEB] Installation du serveur Web Nginx..."
+      apt-get update -y && apt-get install -y nginx
+      echo "<h1>Bienvenue sur le portail Web de l'Universite Espoir d'Afrique</h1>" > /var/www/html/index.html
+    SHELL
+  end
+
+  # ============================================================================
+  # MACHINE 3 : Le Client de Test (client-test)
+  # ============================================================================
+  config.vm.define "client-test" do |client|
+    client.vm.hostname = "client-test-ggt"
+    client.vm.network "private_network", ip: "192.168.56.30"
+    
+    client.vm.provider "virtualbox" do |vb|
+      vb.name = "GGT-CLIENT-TEST"
+      vb.memory = "512"
+    end
+
+    # Provisioning : Installation d'outils de test réseau (curl)
+    client.vm.provision "shell", inline: <<-SHELL
+      echo "[CLIENT] Installation des utilitaires de diagnostic..."
+      apt-get update -y && apt-get install -y curl net-tools
+    SHELL
+  end
+
+end

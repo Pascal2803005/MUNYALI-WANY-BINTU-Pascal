@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Spécification de la version d'API de Vagrant
+Vagrant.configure("2") do |config|
+  
+  # Définition de l'image de base commune (Debian 11 - Stable et ultra-légère)
+  config.vm.box = "debian/bullseye64"
+
+  # 💡 BOUCLE AUTOMATIQUE (Ruby) : Crée 3 machines de l'index 1 à 3
+  (1..3).each do |i|
+    config.vm.define "node-#{i}" do |node|
+      
+      # 1. Nom de l'hôte à l'intérieur de l'OS (ex: node-1, node-2, node-3)
+      node.vm.hostname = "ggt-node-#{i}"
+
+      # 2. Configuration d'une adresse IP fixe privée et unique pour chaque nœud
+      # node-1 aura l'IP 192.168.56.11, node-2 aura 192.168.56.12, etc.
+      node.vm.network "private_network", ip: "192.168.56.#{10 + i}"
+
+      # 3. Optimisation matérielle de l'hyperviseur pour chaque machine virtuelle
+      node.vm.provider "virtualbox" do |vb|
+        vb.name = "GGT-Node-#{i}"
+        vb.memory = "512" # Seulement 512 Mo de RAM par machine (économie d'énergie pour vos laptops)
+        vb.cpus = 1        # 1 seul cœur CPU virtuel
+      end
+
+      # 4. Script de démarrage de base (Provisioning)
+      node.vm.provision "shell", inline: <<-SHELL
+        echo "[INFO] Configuration de ggt-node-#{i} en cours..."
+        apt-get update -y && apt-get install -y curl
+      SHELL
+    end
+  end
+
+end
